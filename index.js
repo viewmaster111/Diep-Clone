@@ -1,5 +1,5 @@
 /**
- * @file Provides useful functions for math calculations for games.
+ * @file Open-source Diep.io Clone
  * @author Nebula
  * @copyright Diep-Clone  Copyright (C) 2017  Nebula
  */
