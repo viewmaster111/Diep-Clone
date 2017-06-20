@@ -52,6 +52,12 @@ function handler (req, res) {
   });
 }
 
+io.on('connection', (socket) => {
+  socket.heartbeat = setInterval(() => {
+    socket.emit('heartbeat', {time: Date.now()});
+  }, 5000);
+});
+
 process.stdin.on('data', function(data){
   if (data.replace(/\r?\n|\r/g, '') === "show w"){
     console.info(`This program is distributed in the hope that it will be useful,
