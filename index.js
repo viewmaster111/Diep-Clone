@@ -23,7 +23,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see http://www.gnu.org/licenses/gpl.txt.
  */
 
 var app = require('http').createServer(handler);
@@ -52,10 +52,13 @@ function handler (req, res) {
   });
 }
 
+app.listen(8005);
+
 io.on('connection', (socket) => {
-  socket.heartbeat = setInterval(() => {
-    socket.emit('heartbeat', {time: Date.now()});
-  }, 5000);
+  console.log("New connection");
+  socket.on('heartbeat', (data) => {
+    socket.emit('heartbeat', data);
+  });
 });
 
 process.stdin.on('data', function(data){

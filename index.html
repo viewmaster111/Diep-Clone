@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<!--
+Diep-Clone: An Open-Source Clone of Diep.io
+Copyright (C) 2017  Nebula
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see http://www.gnu.org/licenses/gpl.txt.
+-->
+	<head>
+		<meta charset="utf-8">
+  </head>
+  <script src="/socket.io/socket.io.js"></script>
+  <body>
+    <script>
+console.info(`Diep-Clone  Copyright (C) 2017  Nebula
+This program comes with ABSOLUTELY NO WARRANTY.
+This is free software, and you are welcome to redistribute it
+under certain conditions.`);
+console.info(`This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.`);
+console.info(`This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.`);
+console.info(`For more information, please visit: http://www.gnu.org/licenses/gpl.txt`);
+      var socket = io();
+      socket.on('connect', () => {
+        socket.heartbeatInterval = setInterval(() => {
+          socket.emit('heartbeat', {time: Date.now()});
+        }, 2500);
+        socket.on('heartbeat', (data) => {
+          socket.latency = Date.now() - data.time;
+          console.log('Latency: ' + socket.latency + 'ms');
+        });
+      });
+    </script>
+  </body>
+</html>
