@@ -23,7 +23,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see http://www.gnu.org/licenses/gpl.txt.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 var app = require('http').createServer(handler);
@@ -40,19 +40,34 @@ This program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.
 This is free software, and you are welcome to redistribute it
 under certain conditions; type 'show c' for details.`);
 
+var config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
+
 function handler (req, res) {
-  fs.readFile(__dirname + '/index.html',
-  function (err, data) {
-    if (err) {
-      res.writeHead(500);
-      return res.end('Error loading index.html');
-    }
-    res.writeHead(200);
-    res.end(data);
-  });
+  if(req.url == '/'){
+    fs.readFile(__dirname + '/index.html',
+    function (err, data) {
+      if (err) {
+        res.writeHead(500);
+        return res.end('Error loading index.html');
+      }
+      res.writeHead(200);
+      res.end(data);
+    });
+  }
+  if(req.url.indexOf('.css') != -1){
+    fs.readFile(__dirname + '/index.css',
+    function (err, data) {
+      if (err) {
+        res.writeHead(500);
+        return res.end('Error loading index.css');
+      }
+      res.writeHead(200);
+      res.end(data);
+    });
+  }
 }
 
-app.listen(8005);
+app.listen(config.port);
 
 io.on('connection', (socket) => {
   console.log("New connection");
