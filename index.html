@@ -19,13 +19,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 	<head>
 		<meta charset="utf-8">
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" type="text/css" href="index.css">
   </head>
   <script src="/socket.io/socket.io.js"></script>
   <body>
     <div id="display">
       <canvas id="game_canvas"></canvas>
     </div>
+    <script>
+      window.devicePixelRatio || (window.devicePixelRatio = 1);
+      function findFirstPositive(b, a, i, c) {
+        c=(d,e)=>e>=d?(a=d+(e-d)/2,0<b(a)&&(a==d||0>=b(a-1))?a:0>=b(a)?c(a+1,e):c(d,a-1)):-1;
+        for (i = 1; 0 >= b(i);) i *= 2;
+        return c(i / 2, i)|0;
+      }
+      window.config = {
+        unitsPerGridLine: 32,
+        gridWidth: 0.5,
+        isRetina: false
+      };
+      config.dpi = findFirstPositive(x => matchMedia(`(max-resolution: ${x}dpi)`).matches);
+      if (window.configOverride !== null && typeof window.configOverride === 'object'){
+        window.configOverride.keys.forEach((k) => {
+          window.config[k] = window.configOverride[k];
+        });
+      }
+    </script>
     <script>
 console.info(`Diep-Clone  Copyright (C) 2017  Nebula
 This program comes with ABSOLUTELY NO WARRANTY.
@@ -41,23 +60,57 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.`);
 console.info(`For the full license, please type "license()" into the console.`);
       var socket = io();
+      window.gridReady = false;
       var canvas = document.getElementById('game_canvas');
       var display = document.getElementById('display');
       function resizeDisplay(){
+        window.gridReady = false;
         display.style.width = window.innerWidth + 'px';
         display.style.height = window.innerHeight + 'px';
         display.style.marginLeft = (-window.innerWidth / 2) + 'px';
         display.style.marginTop = (-window.innerHeight / 2) + 'px';
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+        var gridSVG = `<svg width="${window.innerWidth + config.unitsPerGridLine * 2}px" height="${window.innerHeight + config.unitsPerGridLine * 2}px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <pattern id="smallGrid" width="${config.unitsPerGridLine / (window.devicePixelRatio * 96 / config.dpi)}" height="${config.unitsPerGridLine / (window.devicePixelRatio * 96 / config.dpi)}" patternUnits="userSpaceOnUse">
+                <path d="M ${config.unitsPerGridLine / (window.devicePixelRatio * 96 / config.dpi)} 0 L 0 0 0 ${config.unitsPerGridLine / (window.devicePixelRatio * 96 / config.dpi)}" fill="none" stroke="#555555" stroke-width="${config.gridWidth / window.devicePixelRatio}" />
+            </pattern>
+        </defs>
+        <rect width="${window.innerWidth + config.unitsPerGridLine * 2}px" height="${window.innerHeight + config.unitsPerGridLine * 2}px" fill="url(#smallGrid)" />
+    </svg>`;
+        var DOMURL = window.URL || window.webkitURL || window;
+        var img = new Image();
+        var svg = new Blob([gridSVG], {type: 'image/svg+xml;charset=utf-8'});
+        var url = DOMURL.createObjectURL(svg);
+        img.onload = function(){
+          window.grid = img;
+          window.gridReady = true;
+        }
+        img.src = url;
       }
       resizeDisplay();
+      window.x = 0;
+      window.y = 0;
+      window.input = {};
+      window.input.mouseX = 0;
+      window.input.mouseY = 0;
       window.addEventListener('resize', resizeDisplay, false);
       window.addEventListener('orientationchange', resizeDisplay, false);
       var ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#AAAAAA';
-      ctx.rect(0, 0, canvas.width, canvas.height);
-      ctx.fill();
+      canvas.addEventListener('mousemove', function(e) {
+        window.input.mouseX = e.clientX;
+        window.input.mouseY = e.clientY;
+      }, false);
+      function updateCanvas(){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (window.gridReady){
+          window.x = window.input.mouseX % config.unitsPerGridLine;
+          window.y = window.input.mouseY % config.unitsPerGridLine;
+          ctx.drawImage(window.grid, window.x - config.unitsPerGridLine, window.y - config.unitsPerGridLine);
+        }
+      }
+      setInterval(updateCanvas, 50);
       socket.on('connect', () => {
         socket.heartbeatInterval = setInterval(() => {
           socket.emit('heartbeat', {time: Date.now()});
