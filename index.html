@@ -61,6 +61,17 @@ the Free Software Foundation, either version 3 of the License, or
 console.info(`For the full license, please type "license()" into the console.`);
       var socket = io();
       window.gridReady = false;
+      /* GAME STATES
+        -1: GAME ERROR
+        0: NOT CONNECTED
+        1: CONNECTED, NOT SPAWNED
+        2: UPDATE IN PROGRESS
+        3: SPAWNING
+        4: SPAWNED
+        5: DEATH SCREEN
+      */
+      var gameState = 0;
+      var keys = {};
       var canvas = document.getElementById('game_canvas');
       var display = document.getElementById('display');
       function resizeDisplay(){
@@ -102,16 +113,21 @@ console.info(`For the full license, please type "license()" into the console.`);
         window.input.mouseX = e.clientX;
         window.input.mouseY = e.clientY;
       }, false);
-      function updateCanvas(){
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (window.gridReady){
-          window.x = window.input.mouseX % config.unitsPerGridLine;
-          window.y = window.input.mouseY % config.unitsPerGridLine;
-          ctx.drawImage(window.grid, window.x - config.unitsPerGridLine, window.y - config.unitsPerGridLine);
-        }
-      }
-      setInterval(updateCanvas, 50);
       socket.on('connect', () => {
+        function updateCanvas(){
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          if (window.gridReady){
+            window.x = window.input.mouseX % config.unitsPerGridLine;
+            window.y = window.input.mouseY % config.unitsPerGridLine;
+            ctx.drawImage(window.grid, window.x - config.unitsPerGridLine, window.y - config.unitsPerGridLine);
+          }
+          if (gameState == 4){
+            socket.userInputInterval = setInterval(() => {
+              socket.emit('user_input', keys);
+            }, 50);
+          }
+        }
+        setInterval(updateCanvas, 50);
         socket.heartbeatInterval = setInterval(() => {
           socket.emit('heartbeat', {time: Date.now()});
         }, 2500);
@@ -119,6 +135,12 @@ console.info(`For the full license, please type "license()" into the console.`);
           socket.latency = Date.now() - data.time;
           console.log('Latency: ' + socket.latency + 'ms');
         });
+      });
+      window.addEventListener('keydown', (e) => {
+        keys[e.keyCode.toString()] = true;
+      });
+      window.addEventListener('keyup', (e) => {
+        keys[e.keyCode.toString()] = false;
       });
     </script>
     <script>
